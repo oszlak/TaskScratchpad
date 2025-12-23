@@ -105,7 +105,8 @@ final class SubTask {
 final class TaskItem {
     var id: UUID
     var title: String
-    var notes: String
+    var notes: String              // Plain text - shown in task row (3-4 lines context)
+    var focusNotes: String         // Rich text (RTF base64) - shown in Focus Mode
     var isCompleted: Bool
     var isExpanded: Bool
     var colorHex: String
@@ -119,6 +120,7 @@ final class TaskItem {
         id: UUID = UUID(),
         title: String,
         notes: String = "",
+        focusNotes: String = "",
         isCompleted: Bool = false,
         isExpanded: Bool = true,
         colorHex: String = "#6EA8FE",
@@ -130,6 +132,7 @@ final class TaskItem {
         self.id = id
         self.title = title
         self.notes = notes
+        self.focusNotes = focusNotes
         self.isCompleted = isCompleted
         self.isExpanded = isExpanded
         self.colorHex = colorHex
@@ -1504,13 +1507,44 @@ struct TaskFocusView: View {
             // Main content area
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Notes section with Markdown
+                    // Quick context (shown in task row)
                     VStack(alignment: .leading, spacing: 8) {
-                        Label("Notes & Thoughts", systemImage: "note.text")
+                        Label("Quick Context", systemImage: "text.bubble")
                             .font(.headline)
                             .foregroundStyle(.secondary)
 
-                        RichTextEditor(text: $task.notes, accent: accent)
+                        Text("This appears in the task list (3-4 lines)")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+
+                        TextEditor(text: $task.notes)
+                            .font(.body)
+                            .scrollContentBackground(.hidden)
+                            .padding(12)
+                            .frame(height: 80)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color.primary.opacity(0.03))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(accent.opacity(0.15))
+                                    )
+                            )
+                    }
+
+                    Divider()
+
+                    // Full notes section with rich text
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Full Notes & Thoughts", systemImage: "doc.richtext")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+
+                        Text("Rich text editor - format text, add links, etc.")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+
+                        RichTextEditor(text: $task.focusNotes, accent: accent)
                             .frame(minHeight: 280)
                     }
 
