@@ -4,7 +4,7 @@ set -e
 # Configuration
 APP_NAME="TaskScratchpad"
 BUNDLE_ID="com.yourname.taskscratchpad"
-VERSION="0.0.1"
+VERSION="0.0.2"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"

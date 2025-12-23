@@ -33,9 +33,9 @@ struct VersionTests {
         #expect(!bundleId.hasSuffix("."), "Bundle ID should not end with a dot")
     }
 
-    @Test("Current version is 0.0.1")
+    @Test("Current version is 0.0.2")
     func currentVersion() {
-        #expect(AppVersion.version == "0.0.1")
+        #expect(AppVersion.version == "0.0.2")
     }
 }
 
