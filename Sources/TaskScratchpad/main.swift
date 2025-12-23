@@ -846,6 +846,171 @@ final class TaskFocusWindowController {
     }
 }
 
+// MARK: - Markdown Editor
+
+struct MarkdownToolbar: View {
+    @Binding var text: String
+    let accent: Color
+
+    var body: some View {
+        HStack(spacing: 2) {
+            FormatButton(icon: "bold", help: "Bold") { insertMarkdown("**", "**") }
+            FormatButton(icon: "italic", help: "Italic") { insertMarkdown("_", "_") }
+            FormatButton(icon: "strikethrough", help: "Strikethrough") { insertMarkdown("~~", "~~") }
+
+            Divider().frame(height: 20).padding(.horizontal, 6)
+
+            FormatButton(icon: "number", help: "Heading") { insertMarkdown("## ", "") }
+            FormatButton(icon: "list.bullet", help: "Bullet List") { insertMarkdown("- ", "") }
+            FormatButton(icon: "list.number", help: "Numbered List") { insertMarkdown("1. ", "") }
+            FormatButton(icon: "checklist", help: "Checkbox") { insertMarkdown("- [ ] ", "") }
+
+            Divider().frame(height: 20).padding(.horizontal, 6)
+
+            FormatButton(icon: "link", help: "Link") { insertMarkdown("[", "](url)") }
+            FormatButton(icon: "chevron.left.forwardslash.chevron.right", help: "Code") { insertMarkdown("`", "`") }
+            FormatButton(icon: "text.quote", help: "Quote") { insertMarkdown("> ", "") }
+
+            Spacer()
+
+            Text("Markdown supported")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color.primary.opacity(0.03))
+    }
+
+    private func insertMarkdown(_ prefix: String, _ suffix: String) {
+        text += prefix + "text" + suffix
+    }
+}
+
+struct FormatButton: View {
+    let icon: String
+    let help: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 28, height: 28)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(help)
+    }
+}
+
+struct MarkdownPreview: View {
+    let text: String
+    let accent: Color
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 8) {
+                if text.isEmpty {
+                    Text("Nothing to preview...")
+                        .foregroundStyle(.tertiary)
+                        .italic()
+                } else {
+                    Text(attributedMarkdown)
+                        .textSelection(.enabled)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+        }
+    }
+
+    private var attributedMarkdown: AttributedString {
+        do {
+            let attributed = try AttributedString(markdown: text, options: .init(
+                allowsExtendedAttributes: true,
+                interpretedSyntax: .inlineOnlyPreservingWhitespace
+            ))
+            return attributed
+        } catch {
+            return AttributedString(text)
+        }
+    }
+}
+
+struct MarkdownEditor: View {
+    @Binding var text: String
+    let accent: Color
+    @State private var showPreview = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Toolbar
+            HStack {
+                MarkdownToolbar(text: $text, accent: accent)
+
+                Toggle(isOn: $showPreview) {
+                    Image(systemName: showPreview ? "eye.fill" : "eye")
+                        .font(.system(size: 12))
+                }
+                .toggleStyle(.button)
+                .buttonStyle(.plain)
+                .help(showPreview ? "Hide Preview" : "Show Preview")
+                .padding(.trailing, 12)
+            }
+            .background(Color.primary.opacity(0.03))
+
+            Divider()
+
+            // Editor or Split View
+            if showPreview {
+                HSplitView {
+                    // Editor
+                    editorView
+                        .frame(minWidth: 200)
+
+                    // Preview
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack {
+                            Text("Preview")
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(accent.opacity(0.08))
+
+                        MarkdownPreview(text: text, accent: accent)
+                    }
+                    .frame(minWidth: 200)
+                    .background(Color.primary.opacity(0.02))
+                }
+            } else {
+                editorView
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.primary.opacity(0.02))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(accent.opacity(0.15))
+                )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    private var editorView: some View {
+        TextEditor(text: $text)
+            .font(.system(.body, design: .monospaced))
+            .scrollContentBackground(.hidden)
+            .padding(12)
+            .frame(minHeight: 200)
+    }
+}
+
 struct TaskFocusView: View {
     @Bindable var task: TaskItem
     let onClose: () -> Void
@@ -920,25 +1085,14 @@ struct TaskFocusView: View {
             // Main content area
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Notes section
+                    // Notes section with Markdown
                     VStack(alignment: .leading, spacing: 8) {
                         Label("Notes & Thoughts", systemImage: "note.text")
                             .font(.headline)
                             .foregroundStyle(.secondary)
 
-                        TextEditor(text: $task.notes)
-                            .font(.body)
-                            .scrollContentBackground(.hidden)
-                            .padding(12)
-                            .frame(minHeight: 200)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color.primary.opacity(0.03))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(accent.opacity(0.15))
-                                    )
-                            )
+                        MarkdownEditor(text: $task.notes, accent: accent)
+                            .frame(minHeight: 280)
                     }
 
                     // Subtasks section
@@ -964,7 +1118,7 @@ struct TaskFocusView: View {
                 .padding(20)
             }
         }
-        .frame(minWidth: 500, minHeight: 400)
+        .frame(minWidth: 600, minHeight: 500)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 }
