@@ -17,7 +17,7 @@ permissions:
 jobs:
   release:
     name: Create Release from Tag
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Determine Tag
