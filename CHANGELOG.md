@@ -1,30 +1,26 @@
-# [0.1.0](https://github.com/oszlak/TaskScratchpad/compare/v0.0.2...v0.1.0) (2025-12-23)
-
-
-### Features
-
-* add Markdown support in Focus Mode ([95def38](https://github.com/oszlak/TaskScratchpad/commit/95def388ccb44df23f9a4744b494c6bec4da1bc1))
-
 # Changelog
 
 All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
-## [0.0.2] - 2024-12-23
+## [0.0.1] - 2025-12-23
 
 ### Added
+- Initial release of Task Scratchpad
 - Multiple scratchpads with tabs (Cmd+T to add)
+- Task management with drag-and-drop reordering
 - Subtasks with progress tracking
+- Focus mode window for detailed notes with rich text support
 - Import/export to JSON (Cmd+Shift+E/I)
-- Focus mode window for detailed notes
+- Global hotkey (Option+Space) to show/hide
+- Color-coded tasks and scratchpads
 - App icon (warm peach notepad with teal checkmark)
 - Rename tabs (pencil icon or double-click)
 - Empty state with friendly messaging
 
-### Changed
-- Warmer color palette
-
-### Fixed
-- Subtask completion toggle now works
-- Task creation properly links to scratchpad
+### Technical
+- SwiftUI + SwiftData for modern macOS 14+ support
+- Modular codebase with clear separation of concerns
+- XCUITest infrastructure for UI testing
+- GitHub Actions CI/CD with code coverage
