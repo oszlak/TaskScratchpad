@@ -1,3 +1,10 @@
+## [0.0.2](https://github.com/oszlak/TaskScratchpad/compare/v0.0.1...v0.0.2) (2025-12-23)
+
+
+### Bug Fixes
+
+* correct version extraction in release-tag workflow ([8d32db3](https://github.com/oszlak/TaskScratchpad/commit/8d32db393d908b5e002cdec9a6e523b22c942e26))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
