@@ -24,12 +24,19 @@ jobs:
         id: tag
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
-            echo "version=${{ inputs.tag }}" | sed 's/^v//' >> $GITHUB_OUTPUT
+            TAG="${{ inputs.tag }}"
           else
-            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-            echo "version=${{ github.ref_name }}" | sed 's/^v//' >> $GITHUB_OUTPUT
+            TAG="${{ github.ref_name }}"
           fi
+          
+          # Extract version without 'v' prefix
+          VERSION="${TAG#v}"
+          
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          echo "Tag: $TAG"
+          echo "Version: $VERSION"
 
       - name: Checkout
         uses: actions/checkout@v4
