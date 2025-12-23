@@ -846,62 +846,220 @@ final class TaskFocusWindowController {
     }
 }
 
-// MARK: - Markdown Editor
+// MARK: - Rich Text Toolbar (Office/Docs Style)
 
-struct MarkdownToolbar: View {
-    @Binding var text: String
-    let accent: Color
-
-    var body: some View {
-        HStack(spacing: 2) {
-            FormatButton(icon: "bold", help: "Bold") { insertMarkdown("**", "**") }
-            FormatButton(icon: "italic", help: "Italic") { insertMarkdown("_", "_") }
-            FormatButton(icon: "strikethrough", help: "Strikethrough") { insertMarkdown("~~", "~~") }
-
-            Divider().frame(height: 20).padding(.horizontal, 6)
-
-            FormatButton(icon: "number", help: "Heading") { insertMarkdown("## ", "") }
-            FormatButton(icon: "list.bullet", help: "Bullet List") { insertMarkdown("- ", "") }
-            FormatButton(icon: "list.number", help: "Numbered List") { insertMarkdown("1. ", "") }
-            FormatButton(icon: "checklist", help: "Checkbox") { insertMarkdown("- [ ] ", "") }
-
-            Divider().frame(height: 20).padding(.horizontal, 6)
-
-            FormatButton(icon: "link", help: "Link") { insertMarkdown("[", "](url)") }
-            FormatButton(icon: "chevron.left.forwardslash.chevron.right", help: "Code") { insertMarkdown("`", "`") }
-            FormatButton(icon: "text.quote", help: "Quote") { insertMarkdown("> ", "") }
-
-            Spacer()
-
-            Text("Markdown supported")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Color.primary.opacity(0.03))
-    }
-
-    private func insertMarkdown(_ prefix: String, _ suffix: String) {
-        text += prefix + "text" + suffix
-    }
-}
-
-struct FormatButton: View {
+struct ToolbarButton: View {
     let icon: String
+    let label: String?
     let help: String
+    let isActive: Bool
     let action: () -> Void
+
+    init(icon: String, label: String? = nil, help: String, isActive: Bool = false, action: @escaping () -> Void) {
+        self.icon = icon
+        self.label = label
+        self.help = help
+        self.isActive = isActive
+        self.action = action
+    }
+
+    @State private var isHovering = false
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.secondary)
-                .frame(width: 28, height: 28)
-                .contentShape(Rectangle())
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .medium))
+                if let label = label {
+                    Text(label)
+                        .font(.system(size: 11, weight: .medium))
+                }
+            }
+            .foregroundStyle(isActive ? Color.accentColor : (isHovering ? .primary : .secondary))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isActive ? Color.accentColor.opacity(0.15) : (isHovering ? Color.primary.opacity(0.08) : Color.clear))
+            )
         }
         .buttonStyle(.plain)
         .help(help)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovering = hovering
+            }
+        }
+    }
+}
+
+struct ToolbarDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(Color.primary.opacity(0.1))
+            .frame(width: 1, height: 24)
+            .padding(.horizontal, 8)
+    }
+}
+
+struct HeadingPicker: View {
+    @Binding var text: String
+    @State private var isExpanded = false
+
+    var body: some View {
+        Menu {
+            Button("Normal Text") { }
+            Divider()
+            Button("Heading 1") { insertHeading("# ") }
+            Button("Heading 2") { insertHeading("## ") }
+            Button("Heading 3") { insertHeading("### ") }
+        } label: {
+            HStack(spacing: 4) {
+                Text("Paragraph")
+                    .font(.system(size: 11, weight: .medium))
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 9, weight: .semibold))
+            }
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.primary.opacity(0.05))
+            )
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+    }
+
+    private func insertHeading(_ prefix: String) {
+        text += "\n" + prefix
+    }
+}
+
+struct RichTextToolbar: View {
+    @Binding var text: String
+    let accent: Color
+    @Binding var showPreview: Bool
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 4) {
+                // Paragraph style dropdown
+                HeadingPicker(text: $text)
+
+                ToolbarDivider()
+
+                // Text formatting group
+                HStack(spacing: 2) {
+                    ToolbarButton(icon: "bold", help: "Bold (⌘B)") {
+                        wrapSelection(with: "**")
+                    }
+                    ToolbarButton(icon: "italic", help: "Italic (⌘I)") {
+                        wrapSelection(with: "_")
+                    }
+                    ToolbarButton(icon: "underline", help: "Underline") {
+                        wrapSelection(prefix: "<u>", suffix: "</u>")
+                    }
+                    ToolbarButton(icon: "strikethrough", help: "Strikethrough") {
+                        wrapSelection(with: "~~")
+                    }
+                }
+                .padding(4)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.primary.opacity(0.03))
+                )
+
+                ToolbarDivider()
+
+                // Lists group
+                HStack(spacing: 2) {
+                    ToolbarButton(icon: "list.bullet", help: "Bullet List") {
+                        insertAtLineStart("- ")
+                    }
+                    ToolbarButton(icon: "list.number", help: "Numbered List") {
+                        insertAtLineStart("1. ")
+                    }
+                    ToolbarButton(icon: "checklist", help: "Task List") {
+                        insertAtLineStart("- [ ] ")
+                    }
+                }
+                .padding(4)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.primary.opacity(0.03))
+                )
+
+                ToolbarDivider()
+
+                // Insert group
+                HStack(spacing: 2) {
+                    ToolbarButton(icon: "link", help: "Insert Link") {
+                        text += "[link text](https://)"
+                    }
+                    ToolbarButton(icon: "photo", help: "Insert Image") {
+                        text += "![alt text](image-url)"
+                    }
+                    ToolbarButton(icon: "chevron.left.forwardslash.chevron.right", help: "Code Block") {
+                        text += "\n```\ncode here\n```\n"
+                    }
+                    ToolbarButton(icon: "text.quote", help: "Quote") {
+                        insertAtLineStart("> ")
+                    }
+                    ToolbarButton(icon: "minus", help: "Horizontal Rule") {
+                        text += "\n---\n"
+                    }
+                }
+                .padding(4)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.primary.opacity(0.03))
+                )
+
+                ToolbarDivider()
+
+                // Table
+                ToolbarButton(icon: "tablecells", help: "Insert Table") {
+                    text += "\n| Column 1 | Column 2 | Column 3 |\n|----------|----------|----------|\n| Cell 1   | Cell 2   | Cell 3   |\n"
+                }
+
+                Spacer()
+
+                // Preview toggle
+                ToolbarButton(
+                    icon: showPreview ? "eye.fill" : "eye",
+                    label: showPreview ? "Hide Preview" : "Preview",
+                    help: "Toggle Preview",
+                    isActive: showPreview
+                ) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        showPreview.toggle()
+                    }
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+        }
+        .background(
+            LinearGradient(
+                colors: [Color.primary.opacity(0.04), Color.primary.opacity(0.02)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+    }
+
+    private func wrapSelection(with wrapper: String) {
+        wrapSelection(prefix: wrapper, suffix: wrapper)
+    }
+
+    private func wrapSelection(prefix: String, suffix: String) {
+        text += prefix + "text" + suffix
+    }
+
+    private func insertAtLineStart(_ prefix: String) {
+        text += "\n" + prefix
     }
 }
 
@@ -946,20 +1104,8 @@ struct MarkdownEditor: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Toolbar
-            HStack {
-                MarkdownToolbar(text: $text, accent: accent)
-
-                Toggle(isOn: $showPreview) {
-                    Image(systemName: showPreview ? "eye.fill" : "eye")
-                        .font(.system(size: 12))
-                }
-                .toggleStyle(.button)
-                .buttonStyle(.plain)
-                .help(showPreview ? "Hide Preview" : "Show Preview")
-                .padding(.trailing, 12)
-            }
-            .background(Color.primary.opacity(0.03))
+            // Rich Text Toolbar
+            RichTextToolbar(text: $text, accent: accent, showPreview: $showPreview)
 
             Divider()
 
@@ -968,46 +1114,69 @@ struct MarkdownEditor: View {
                 HSplitView {
                     // Editor
                     editorView
-                        .frame(minWidth: 200)
+                        .frame(minWidth: 250)
 
                     // Preview
                     VStack(alignment: .leading, spacing: 0) {
                         HStack {
+                            Image(systemName: "eye")
+                                .font(.system(size: 11))
                             Text("Preview")
                                 .font(.caption.weight(.medium))
-                                .foregroundStyle(.secondary)
                             Spacer()
                         }
+                        .foregroundStyle(.secondary)
                         .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(accent.opacity(0.08))
+                        .padding(.vertical, 8)
+                        .background(accent.opacity(0.06))
 
                         MarkdownPreview(text: text, accent: accent)
                     }
-                    .frame(minWidth: 200)
-                    .background(Color.primary.opacity(0.02))
+                    .frame(minWidth: 250)
+                    .background(Color.primary.opacity(0.01))
                 }
             } else {
                 editorView
             }
         }
         .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.primary.opacity(0.02))
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(nsColor: .textBackgroundColor).opacity(0.5))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(accent.opacity(0.15))
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.primary.opacity(0.1))
                 )
         )
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private var editorView: some View {
-        TextEditor(text: $text)
-            .font(.system(.body, design: .monospaced))
-            .scrollContentBackground(.hidden)
-            .padding(12)
-            .frame(minHeight: 200)
+        VStack(spacing: 0) {
+            TextEditor(text: $text)
+                .font(.system(.body, design: .default))
+                .scrollContentBackground(.hidden)
+                .padding(16)
+                .frame(minHeight: 200)
+
+            // Character count footer
+            HStack {
+                Text("\(text.count) characters")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                Spacer()
+                Text("Markdown")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(
+                        Capsule()
+                            .fill(accent.opacity(0.1))
+                    )
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 10)
+        }
     }
 }
 
