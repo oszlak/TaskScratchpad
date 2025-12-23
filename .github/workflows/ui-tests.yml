@@ -22,82 +22,14 @@ jobs:
           xcode-version: latest-stable
 
       - name: Show Xcode Version
-        run: |
-          xcodebuild -version
-          xcrun simctl list devices available
+        run: xcodebuild -version
 
-      - name: Build App for Testing
-        run: |
-          # First build the SPM executable
-          swift build -v
-          
-          # Create the app bundle structure for UI testing
-          mkdir -p build/TaskScratchpad.app/Contents/MacOS
-          mkdir -p build/TaskScratchpad.app/Contents/Resources
-          
-          # Copy the built executable
-          ARCH=$(uname -m)
-          cp .build/${ARCH}-apple-macosx/debug/TaskScratchpad build/TaskScratchpad.app/Contents/MacOS/
-          
-          # Copy icon if exists
-          if [ -f Resources/AppIcon.icns ]; then
-            cp Resources/AppIcon.icns build/TaskScratchpad.app/Contents/Resources/
-          fi
-          
-          # Create Info.plist
-          cat > build/TaskScratchpad.app/Contents/Info.plist << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>CFBundleExecutable</key>
-            <string>TaskScratchpad</string>
-            <key>CFBundleIdentifier</key>
-            <string>com.taskscratchpad.app</string>
-            <key>CFBundleName</key>
-            <string>TaskScratchpad</string>
-            <key>CFBundlePackageType</key>
-            <string>APPL</string>
-            <key>CFBundleShortVersionString</key>
-            <string>1.0</string>
-            <key>CFBundleVersion</key>
-            <string>1</string>
-            <key>LSMinimumSystemVersion</key>
-            <string>14.0</string>
-            <key>CFBundleIconFile</key>
-            <string>AppIcon</string>
-            <key>NSHighResolutionCapable</key>
-            <true/>
-          </dict>
-          </plist>
-          EOF
-          
-          # Create PkgInfo
-          echo -n "APPL????" > build/TaskScratchpad.app/Contents/PkgInfo
-          
-          echo "App bundle created successfully"
-          ls -la build/TaskScratchpad.app/Contents/
-
-      - name: Build UI Tests
-        run: |
-          # Build the UI test bundle using xcodebuild
-          xcodebuild build-for-testing \
-            -project TaskScratchpad.xcodeproj \
-            -scheme TaskScratchpad \
-            -destination 'platform=macOS' \
-            -derivedDataPath build/DerivedData \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            2>&1 | xcbeautify || true
-            
-          # Show what was built
-          find build/DerivedData -name "*.xctest" -type d 2>/dev/null || echo "UI test bundle location will be in derived data"
-
-      - name: Run UI Tests
+      - name: Build and Test
+        id: test
         continue-on-error: true
         run: |
           # Run UI tests with xcodebuild
+          set -o pipefail
           xcodebuild test \
             -project TaskScratchpad.xcodeproj \
             -scheme TaskScratchpad \
@@ -106,28 +38,65 @@ jobs:
             -resultBundlePath build/TestResults.xcresult \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee uitest-output.log | xcbeautify || true
+            2>&1 | tee uitest-output.log
+          
+          TEST_EXIT_CODE=$?
+          echo "test_exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
+          exit $TEST_EXIT_CODE
 
       - name: Parse Test Results
         if: always()
         run: |
-          # Check if tests passed by looking at the log
-          if grep -q "Test session results" uitest-output.log 2>/dev/null; then
-            echo "## 🧪 UI Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "## 🧪 UI Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f uitest-output.log ]; then
+            # Extract test summary from xcodebuild output
+            # Look for lines like: "Executed X tests, with Y failures"
+            SUMMARY=$(grep -E "Executed [0-9]+ tests" uitest-output.log | tail -1 || echo "")
             
-            # Count passed/failed from log
-            PASSED=$(grep -c "✓" uitest-output.log 2>/dev/null || echo "0")
-            FAILED=$(grep -c "✗" uitest-output.log 2>/dev/null || echo "0")
+            if [ -n "$SUMMARY" ]; then
+              echo "**Summary:** $SUMMARY" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
             
-            echo "- ✅ Tests Passed: $PASSED" >> $GITHUB_STEP_SUMMARY
-            echo "- ❌ Tests Failed: $FAILED" >> $GITHUB_STEP_SUMMARY
-          elif grep -q "Failing tests:" uitest-output.log 2>/dev/null; then
-            echo "## 🧪 UI Test Results - Some Tests Failed" >> $GITHUB_STEP_SUMMARY
-            grep -A 50 "Failing tests:" uitest-output.log >> $GITHUB_STEP_SUMMARY || true
+            # Count passed tests (lines containing "passed")
+            PASSED=$(grep -c "passed" uitest-output.log 2>/dev/null || echo "0")
+            FAILED=$(grep -c "failed" uitest-output.log 2>/dev/null || echo "0")
+            
+            echo "| Status | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| ✅ Passed | $PASSED |" >> $GITHUB_STEP_SUMMARY
+            echo "| ❌ Failed | $FAILED |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            # Show individual test results
+            echo "<details>" >> $GITHUB_STEP_SUMMARY
+            echo "<summary>📋 Test Details</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -E "Test (Case|case)" uitest-output.log | head -50 >> $GITHUB_STEP_SUMMARY || echo "No test details found"
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+            
+            # Check for TEST SUCCEEDED or failures
+            if grep -q "TEST SUCCEEDED" uitest-output.log; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### ✅ All UI Tests Passed!" >> $GITHUB_STEP_SUMMARY
+            elif grep -q "TEST FAILED" uitest-output.log; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### ❌ Some UI Tests Failed" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "<details>" >> $GITHUB_STEP_SUMMARY
+              echo "<summary>Failure Details</summary>" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              grep -A 5 "failed" uitest-output.log | head -100 >> $GITHUB_STEP_SUMMARY || true
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              echo "</details>" >> $GITHUB_STEP_SUMMARY
+            fi
           else
-            echo "## 🧪 UI Tests" >> $GITHUB_STEP_SUMMARY
-            echo "See artifacts for detailed results" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ No test output log found" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Upload Test Results
@@ -138,6 +107,7 @@ jobs:
           path: |
             build/TestResults.xcresult
             uitest-output.log
+          if-no-files-found: ignore
           retention-days: 14
 
       - name: Upload Screenshots
@@ -145,9 +115,15 @@ jobs:
         if: always()
         with:
           name: ui-test-screenshots
-          path: |
-            build/DerivedData/**/Attachments/**/*.png
-            build/DerivedData/**/Attachments/**/*.jpg
+          path: build/DerivedData/**/Attachments/**/*.png
           if-no-files-found: ignore
           retention-days: 14
 
+      - name: Check Test Result
+        if: always()
+        run: |
+          if [ "${{ steps.test.outputs.test_exit_code }}" != "0" ]; then
+            echo "UI tests failed with exit code ${{ steps.test.outputs.test_exit_code }}"
+            # Don't fail the workflow for now - UI tests are informational
+            # exit 1
+          fi
