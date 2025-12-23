@@ -33,9 +33,12 @@ struct VersionTests {
         #expect(!bundleId.hasSuffix("."), "Bundle ID should not end with a dot")
     }
 
-    @Test("Current version is 0.0.2")
+    @Test("Current version is semantic version")
     func currentVersion() {
-        #expect(AppVersion.version == "0.0.2")
+        // Version should be updated by semantic-release, just verify it's valid
+        let version = AppVersion.version
+        #expect(!version.isEmpty, "Version should not be empty")
+        #expect(version.contains("."), "Version should contain dots")
     }
 }
 

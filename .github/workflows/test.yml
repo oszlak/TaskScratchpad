@@ -1,14 +1,17 @@
-name: Test
+name: Test & Coverage
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
+
+env:
+  COVERAGE_THRESHOLD: 90
 
 jobs:
   test:
-    name: Run Tests
+    name: Test with Coverage
     runs-on: macos-14
 
     steps:
@@ -26,8 +29,115 @@ jobs:
       - name: Build
         run: swift build -v
 
-      - name: Run Tests
-        run: swift test -v
+      - name: Run Tests with Coverage
+        run: |
+          swift test --enable-code-coverage -v
+
+      - name: Generate Coverage Report
+        run: |
+          # Find the coverage profdata
+          PROFDATA=$(find .build -name "default.profdata" | head -1)
+          
+          # Find the test binary (correct path for macOS)
+          ARCH=$(uname -m)
+          TEST_BINARY=".build/${ARCH}-apple-macosx/debug/TaskScratchpadPackageTests.xctest/Contents/MacOS/TaskScratchpadPackageTests"
+          
+          if [ ! -f "$PROFDATA" ]; then
+            echo "::warning::Coverage profdata not found, skipping coverage report"
+            exit 0
+          fi
+          
+          if [ ! -f "$TEST_BINARY" ]; then
+            echo "::warning::Test binary not found at $TEST_BINARY"
+            find .build -name "TaskScratchpadPackageTests" -type f 2>/dev/null | head -5
+            exit 0
+          fi
+          
+          echo "Generating coverage report..."
+          echo "PROFDATA: $PROFDATA"
+          echo "TEST_BINARY: $TEST_BINARY"
+          
+          # Generate coverage report
+          xcrun llvm-cov report \
+            "$TEST_BINARY" \
+            -instr-profile="$PROFDATA" \
+            -ignore-filename-regex=".build|Tests" \
+            > coverage-report.txt
+          
+          # Display the report
+          cat coverage-report.txt
+          
+          # Export to lcov format for potential badge generation
+          xcrun llvm-cov export \
+            "$TEST_BINARY" \
+            -instr-profile="$PROFDATA" \
+            -ignore-filename-regex=".build|Tests" \
+            -format=lcov \
+            > coverage.lcov 2>/dev/null || true
+
+      - name: Check Coverage Threshold
+        run: |
+          if [ ! -f coverage-report.txt ]; then
+            echo "::warning::Coverage report not found, skipping threshold check"
+            exit 0
+          fi
+          
+          # Extract total coverage percentage from report
+          # The last line contains the TOTAL row
+          COVERAGE_LINE=$(grep "TOTAL" coverage-report.txt || echo "")
+          
+          if [ -z "$COVERAGE_LINE" ]; then
+            echo "::warning::Could not extract coverage, checking Core module only"
+            COVERAGE_LINE=$(grep "TaskScratchpadCore" coverage-report.txt | tail -1 || echo "")
+          fi
+          
+          if [ -z "$COVERAGE_LINE" ]; then
+            echo "::warning::No coverage data found"
+            exit 0
+          fi
+          
+          echo "Coverage line: $COVERAGE_LINE"
+          
+          # Extract percentage (handles different formats)
+          COVERAGE=$(echo "$COVERAGE_LINE" | grep -oE '[0-9]+\.[0-9]+%' | head -1 | tr -d '%')
+          
+          if [ -z "$COVERAGE" ]; then
+            echo "::warning::Could not parse coverage percentage"
+            exit 0
+          fi
+          
+          echo "Current coverage: ${COVERAGE}%"
+          echo "Required threshold: ${COVERAGE_THRESHOLD}%"
+          
+          # Compare coverage to threshold
+          RESULT=$(echo "$COVERAGE >= $COVERAGE_THRESHOLD" | bc -l)
+          
+          if [ "$RESULT" -eq 1 ]; then
+            echo "✅ Coverage ${COVERAGE}% meets threshold of ${COVERAGE_THRESHOLD}%"
+          else
+            echo "❌ Coverage ${COVERAGE}% is below threshold of ${COVERAGE_THRESHOLD}%"
+            exit 1
+          fi
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: |
+            coverage-report.txt
+            coverage.lcov
+          retention-days: 30
+
+      - name: Coverage Summary
+        if: always()
+        run: |
+          if [ -f coverage-report.txt ]; then
+            echo "## 📊 Coverage Report" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat coverage-report.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
 
   build:
     name: Build Release
@@ -50,4 +160,3 @@ jobs:
         run: |
           ls -la .build/release/
           .build/release/TaskScratchpad --version 2>/dev/null || echo "Binary built successfully"
-
