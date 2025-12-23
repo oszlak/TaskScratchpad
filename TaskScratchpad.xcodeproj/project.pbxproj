@@ -7,6 +7,28 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		/* App source files */
+		SRC_APP001 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_APP001 /* App.swift */; };
+		SRC_CMD001 /* AppCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_CMD001 /* AppCommands.swift */; };
+		SRC_CMP001 /* ColorPickerPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_CMP001 /* ColorPickerPopover.swift */; };
+		SRC_CMP002 /* DataDetectingTextEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_CMP002 /* DataDetectingTextEditor.swift */; };
+		SRC_CMP003 /* VisualEffectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_CMP003 /* VisualEffectView.swift */; };
+		SRC_MDL001 /* ExportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_MDL001 /* ExportModels.swift */; };
+		SRC_MDL002 /* SwiftDataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_MDL002 /* SwiftDataModels.swift */; };
+		SRC_STR001 /* TaskStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_STR001 /* TaskStore.swift */; };
+		SRC_UTL001 /* ColorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_UTL001 /* ColorExtension.swift */; };
+		SRC_UTL002 /* DateFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_UTL002 /* DateFormatters.swift */; };
+		SRC_UTL003 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_UTL003 /* HotkeyManager.swift */; };
+		SRC_UTL004 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_UTL004 /* Theme.swift */; };
+		SRC_VW001 /* FocusWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_VW001 /* FocusWindowView.swift */; };
+		SRC_VW002 /* RichTextEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_VW002 /* RichTextEditor.swift */; };
+		SRC_VW003 /* SubtaskViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_VW003 /* SubtaskViews.swift */; };
+		SRC_VW004 /* TabBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_VW004 /* TabBarView.swift */; };
+		SRC_VW005 /* TaskBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_VW005 /* TaskBlockView.swift */; };
+		SRC_VW006 /* TaskScratchpadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FILE_VW006 /* TaskScratchpadView.swift */; };
+		/* Resource files */
+		RES_ICON001 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = FILE_ICON001 /* AppIcon.icns */; };
+		/* UI Test files */
 		UI001 /* TaskScratchpadUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UI002 /* TaskScratchpadUITests.swift */; };
 		UI003 /* TaskScratchpadUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UI004 /* TaskScratchpadUITestsLaunchTests.swift */; };
 /* End PBXBuildFile section */
@@ -35,10 +57,33 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		/* Products */
 		APP002 /* TaskScratchpad.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TaskScratchpad.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		UI005 /* TaskScratchpadUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TaskScratchpadUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		/* App source files */
+		FILE_APP001 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		FILE_CMD001 /* AppCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCommands.swift; sourceTree = "<group>"; };
+		FILE_CMP001 /* ColorPickerPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPickerPopover.swift; sourceTree = "<group>"; };
+		FILE_CMP002 /* DataDetectingTextEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataDetectingTextEditor.swift; sourceTree = "<group>"; };
+		FILE_CMP003 /* VisualEffectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualEffectView.swift; sourceTree = "<group>"; };
+		FILE_MDL001 /* ExportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportModels.swift; sourceTree = "<group>"; };
+		FILE_MDL002 /* SwiftDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataModels.swift; sourceTree = "<group>"; };
+		FILE_STR001 /* TaskStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskStore.swift; sourceTree = "<group>"; };
+		FILE_UTL001 /* ColorExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorExtension.swift; sourceTree = "<group>"; };
+		FILE_UTL002 /* DateFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateFormatters.swift; sourceTree = "<group>"; };
+		FILE_UTL003 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
+		FILE_UTL004 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		FILE_VW001 /* FocusWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusWindowView.swift; sourceTree = "<group>"; };
+		FILE_VW002 /* RichTextEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichTextEditor.swift; sourceTree = "<group>"; };
+		FILE_VW003 /* SubtaskViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubtaskViews.swift; sourceTree = "<group>"; };
+		FILE_VW004 /* TabBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarView.swift; sourceTree = "<group>"; };
+		FILE_VW005 /* TaskBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskBlockView.swift; sourceTree = "<group>"; };
+		FILE_VW006 /* TaskScratchpadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskScratchpadView.swift; sourceTree = "<group>"; };
+		/* Resources */
+		FILE_ICON001 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
+		/* UI Test files */
 		UI002 /* TaskScratchpadUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskScratchpadUITests.swift; sourceTree = "<group>"; };
 		UI004 /* TaskScratchpadUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskScratchpadUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		UI005 /* TaskScratchpadUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TaskScratchpadUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +108,7 @@
 			isa = PBXGroup;
 			children = (
 				SRC001 /* Sources */,
+				RES001 /* Resources */,
 				TST001 /* Tests */,
 				PRD001 /* Products */,
 			);
@@ -88,8 +134,82 @@
 		SRC002 /* TaskScratchpad */ = {
 			isa = PBXGroup;
 			children = (
+				FILE_APP001 /* App.swift */,
+				GRP_CMD /* Commands */,
+				GRP_CMP /* Components */,
+				GRP_MDL /* Models */,
+				GRP_STR /* Store */,
+				GRP_UTL /* Utilities */,
+				GRP_VW /* Views */,
 			);
 			path = TaskScratchpad;
+			sourceTree = "<group>";
+		};
+		GRP_CMD /* Commands */ = {
+			isa = PBXGroup;
+			children = (
+				FILE_CMD001 /* AppCommands.swift */,
+			);
+			path = Commands;
+			sourceTree = "<group>";
+		};
+		GRP_CMP /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FILE_CMP001 /* ColorPickerPopover.swift */,
+				FILE_CMP002 /* DataDetectingTextEditor.swift */,
+				FILE_CMP003 /* VisualEffectView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		GRP_MDL /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				FILE_MDL001 /* ExportModels.swift */,
+				FILE_MDL002 /* SwiftDataModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		GRP_STR /* Store */ = {
+			isa = PBXGroup;
+			children = (
+				FILE_STR001 /* TaskStore.swift */,
+			);
+			path = Store;
+			sourceTree = "<group>";
+		};
+		GRP_UTL /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				FILE_UTL001 /* ColorExtension.swift */,
+				FILE_UTL002 /* DateFormatters.swift */,
+				FILE_UTL003 /* HotkeyManager.swift */,
+				FILE_UTL004 /* Theme.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		GRP_VW /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				FILE_VW001 /* FocusWindowView.swift */,
+				FILE_VW002 /* RichTextEditor.swift */,
+				FILE_VW003 /* SubtaskViews.swift */,
+				FILE_VW004 /* TabBarView.swift */,
+				FILE_VW005 /* TaskBlockView.swift */,
+				FILE_VW006 /* TaskScratchpadView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		RES001 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				FILE_ICON001 /* AppIcon.icns */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		TST001 /* Tests */ = {
@@ -195,6 +315,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				RES_ICON001 /* AppIcon.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -212,6 +333,24 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				SRC_APP001 /* App.swift in Sources */,
+				SRC_CMD001 /* AppCommands.swift in Sources */,
+				SRC_CMP001 /* ColorPickerPopover.swift in Sources */,
+				SRC_CMP002 /* DataDetectingTextEditor.swift in Sources */,
+				SRC_CMP003 /* VisualEffectView.swift in Sources */,
+				SRC_MDL001 /* ExportModels.swift in Sources */,
+				SRC_MDL002 /* SwiftDataModels.swift in Sources */,
+				SRC_STR001 /* TaskStore.swift in Sources */,
+				SRC_UTL001 /* ColorExtension.swift in Sources */,
+				SRC_UTL002 /* DateFormatters.swift in Sources */,
+				SRC_UTL003 /* HotkeyManager.swift in Sources */,
+				SRC_UTL004 /* Theme.swift in Sources */,
+				SRC_VW001 /* FocusWindowView.swift in Sources */,
+				SRC_VW002 /* RichTextEditor.swift in Sources */,
+				SRC_VW003 /* SubtaskViews.swift in Sources */,
+				SRC_VW004 /* TabBarView.swift in Sources */,
+				SRC_VW005 /* TaskBlockView.swift in Sources */,
+				SRC_VW006 /* TaskScratchpadView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -357,12 +496,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = TaskScratchpad;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -383,12 +524,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = TaskScratchpad;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -406,7 +549,8 @@
 		DBG003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
@@ -422,7 +566,8 @@
 		REL003 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
