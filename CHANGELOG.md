@@ -1,3 +1,10 @@
+# [0.1.0](https://github.com/oszlak/TaskScratchpad/compare/v0.0.2...v0.1.0) (2025-12-23)
+
+
+### Features
+
+* add Markdown support in Focus Mode ([95def38](https://github.com/oszlak/TaskScratchpad/commit/95def388ccb44df23f9a4744b494c6bec4da1bc1))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -21,4 +28,3 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 - Subtask completion toggle now works
 - Task creation properly links to scratchpad
-
