@@ -55,6 +55,9 @@ dist/
 # Cursor
 .cursor/
 
+# Planning docs (local only)
+docs/plan/
+
 # Logs
 *.log
 logs/
