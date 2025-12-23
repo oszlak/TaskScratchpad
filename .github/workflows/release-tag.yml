@@ -1,0 +1,162 @@
+name: Release from Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to release (e.g., v0.0.1)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release from Tag
+    runs-on: macos-14
+
+    steps:
+      - name: Determine Tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+            echo "version=${{ inputs.tag }}" | sed 's/^v//' >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "version=${{ github.ref_name }}" | sed 's/^v//' >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Run Tests
+        run: swift test
+
+      - name: Build Release
+        run: swift build -c release
+
+      - name: Create App Bundle
+        run: |
+          APP_NAME="TaskScratchpad"
+          VERSION="${{ steps.tag.outputs.version }}"
+          DIST_DIR="dist"
+          APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
+
+          mkdir -p "$APP_BUNDLE/Contents/MacOS"
+          mkdir -p "$APP_BUNDLE/Contents/Resources"
+
+          cp ".build/release/$APP_NAME" "$APP_BUNDLE/Contents/MacOS/"
+
+          if [ -f "Resources/AppIcon.icns" ]; then
+            cp "Resources/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/"
+          fi
+
+          cat > "$APP_BUNDLE/Contents/Info.plist" << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleDevelopmentRegion</key>
+              <string>en</string>
+              <key>CFBundleExecutable</key>
+              <string>$APP_NAME</string>
+              <key>CFBundleIconFile</key>
+              <string>AppIcon</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.taskscratchpad.app</string>
+              <key>CFBundleInfoDictionaryVersion</key>
+              <string>6.0</string>
+              <key>CFBundleName</key>
+              <string>$APP_NAME</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>$VERSION</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>14.0</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+              <key>NSSupportsAutomaticGraphicsSwitching</key>
+              <true/>
+              <key>LSUIElement</key>
+              <false/>
+          </dict>
+          </plist>
+          EOF
+
+          echo -n "APPL????" > "$APP_BUNDLE/Contents/PkgInfo"
+
+      - name: Sign App (Ad-hoc)
+        run: codesign --force --deep --sign - dist/TaskScratchpad.app
+
+      - name: Create DMG
+        run: |
+          VERSION="${{ steps.tag.outputs.version }}"
+          DMG_NAME="TaskScratchpad-$VERSION.dmg"
+
+          mkdir -p dist/dmg-temp
+          cp -R dist/TaskScratchpad.app dist/dmg-temp/
+          ln -s /Applications dist/dmg-temp/Applications
+
+          hdiutil create -volname "TaskScratchpad" \
+              -srcfolder dist/dmg-temp \
+              -ov -format UDZO \
+              "dist/$DMG_NAME"
+
+          rm -rf dist/dmg-temp
+
+      - name: Create ZIP
+        run: |
+          VERSION="${{ steps.tag.outputs.version }}"
+          cd dist
+          zip -r "TaskScratchpad-$VERSION.zip" TaskScratchpad.app
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          VERSION="${{ steps.tag.outputs.version }}"
+          
+          # Check if release already exists
+          if gh release view "$TAG" &>/dev/null; then
+            echo "Release $TAG already exists, uploading assets..."
+            gh release upload "$TAG" \
+              "dist/TaskScratchpad-$VERSION.dmg" \
+              "dist/TaskScratchpad-$VERSION.zip" \
+              --clobber
+          else
+            echo "Creating new release $TAG..."
+            gh release create "$TAG" \
+              --title "v$VERSION" \
+              --generate-notes \
+              "dist/TaskScratchpad-$VERSION.dmg" \
+              "dist/TaskScratchpad-$VERSION.zip"
+          fi
+
+      - name: Release Summary
+        run: |
+          VERSION="${{ steps.tag.outputs.version }}"
+          echo "## 🎉 Release v$VERSION Created!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Assets" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 TaskScratchpad-$VERSION.dmg" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 TaskScratchpad-$VERSION.zip" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.tag.outputs.tag }})" >> $GITHUB_STEP_SUMMARY
+

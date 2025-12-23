@@ -3,6 +3,17 @@ name: Release
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: 'Force a release even without conventional commits'
+        required: false
+        default: 'false'
+        type: boolean
+      version:
+        description: 'Version to release (e.g., 0.0.2) - leave empty for auto'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -30,15 +41,15 @@ jobs:
     needs: test
     runs-on: macos-14
     outputs:
-      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
-      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+      new_release_published: ${{ steps.semantic.outputs.new_release_published || steps.manual.outputs.released }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version || steps.manual.outputs.version }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -57,9 +68,44 @@ jobs:
 
       - name: Semantic Release
         id: semantic
+        if: ${{ github.event_name == 'push' || inputs.force_release != true }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
+
+      - name: Manual Release
+        id: manual
+        if: ${{ inputs.force_release == true && inputs.version != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          echo "Creating manual release v$VERSION"
+          
+          # Update version file
+          ./scripts/update-version.sh "$VERSION"
+          
+          # Commit version change
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore(release): $VERSION [skip ci]" || echo "No changes to commit"
+          git push origin main
+          
+          # Create tag if it doesn't exist
+          if ! git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            git tag -a "v$VERSION" -m "Release v$VERSION"
+            git push origin "v$VERSION"
+          fi
+          
+          # Create GitHub release
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --generate-notes \
+            || echo "Release may already exist"
+          
+          echo "released=true" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
   build:
     name: Build & Upload Assets
