@@ -23,7 +23,41 @@ swift run
 | `swift run` | Build and run (debug) |
 | `swift build` | Build only (debug) |
 | `swift build -c release` | Build release binary |
+| `swift test` | Run unit tests |
+| `./scripts/run-ui-tests.sh` | Run UI tests (XCUITest) |
 | `swift package clean` | Clean build artifacts |
+
+## Testing
+
+### Unit Tests
+
+```bash
+# Run all unit tests
+swift test
+
+# Run with coverage
+swift test --enable-code-coverage
+```
+
+### UI Tests (XCUITest)
+
+The project includes XCUITest-based UI tests for automated UI verification.
+
+```bash
+# Run UI tests (requires Xcode)
+./scripts/run-ui-tests.sh
+
+# Or manually with xcodebuild
+xcodebuild test \
+    -project TaskScratchpad.xcodeproj \
+    -scheme TaskScratchpad \
+    -destination 'platform=macOS'
+```
+
+**Note:** UI tests require:
+- Xcode (not just command line tools)
+- Accessibility permissions may be needed
+- Install `xcbeautify` for prettier output: `brew install xcbeautify`
 
 ## Keyboard Shortcuts
 

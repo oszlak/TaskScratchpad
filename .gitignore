@@ -1,5 +1,8 @@
 # Xcode
-*.xcodeproj/
+# Keep the project file for UI tests but ignore user data
+!TaskScratchpad.xcodeproj/
+TaskScratchpad.xcodeproj/xcuserdata/
+TaskScratchpad.xcodeproj/project.xcworkspace/xcuserdata/
 *.xcworkspace/
 xcuserdata/
 *.xccheckout
@@ -10,6 +13,7 @@ DerivedData/
 *.ipa
 *.dSYM.zip
 *.dSYM
+build/
 
 # Swift Package Manager
 .build/

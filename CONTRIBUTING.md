@@ -117,7 +117,34 @@ struct TaskRow: View {
 
 ## 🧪 Testing
 
-Currently, the project relies on manual testing. When adding features:
+### Unit Tests
+
+```bash
+# Run all unit tests
+swift test
+
+# Run with code coverage (90% threshold required)
+swift test --enable-code-coverage
+```
+
+### UI Tests (XCUITest)
+
+The project includes automated UI tests using XCUITest.
+
+```bash
+# Run UI tests
+./scripts/run-ui-tests.sh
+
+# Or manually with xcodebuild
+xcodebuild test \
+    -project TaskScratchpad.xcodeproj \
+    -scheme TaskScratchpad \
+    -destination 'platform=macOS'
+```
+
+### Manual Testing Checklist
+
+When adding features, verify:
 
 1. Test on macOS Sonoma and Sequoia if possible
 2. Verify persistence survives app restart
@@ -129,40 +156,45 @@ Currently, the project relies on manual testing. When adding features:
 
 ```
 TaskScratchpad/
-├── Package.swift                 # SwiftPM configuration
+├── Package.swift                     # SwiftPM configuration
+├── TaskScratchpad.xcodeproj/         # Xcode project (for UI tests)
 ├── Sources/
 │   ├── TaskScratchpad/
-│   │   ├── App.swift             # App entry point
-│   │   ├── Models/               # SwiftData models
+│   │   ├── App.swift                 # App entry point
+│   │   ├── Models/                   # SwiftData models
 │   │   │   ├── ExportModels.swift
 │   │   │   └── SwiftDataModels.swift
-│   │   ├── Store/                # State management
+│   │   ├── Store/                    # State management
 │   │   │   └── TaskStore.swift
-│   │   ├── Views/                # SwiftUI views
+│   │   ├── Views/                    # SwiftUI views
 │   │   │   ├── TaskScratchpadView.swift
 │   │   │   ├── TabBarView.swift
 │   │   │   ├── TaskBlockView.swift
 │   │   │   ├── SubtaskViews.swift
 │   │   │   ├── FocusWindowView.swift
 │   │   │   └── RichTextEditor.swift
-│   │   ├── Components/           # Reusable UI components
+│   │   ├── Components/               # Reusable UI components
 │   │   │   ├── ColorPickerPopover.swift
 │   │   │   ├── DataDetectingTextEditor.swift
 │   │   │   └── VisualEffectView.swift
-│   │   ├── Utilities/            # Helpers
+│   │   ├── Utilities/                # Helpers
 │   │   │   ├── HotkeyManager.swift
 │   │   │   ├── Theme.swift
 │   │   │   ├── DateFormatters.swift
 │   │   │   └── ColorExtension.swift
-│   │   └── Commands/             # Menu commands
+│   │   └── Commands/                 # Menu commands
 │   │       └── AppCommands.swift
-│   └── TaskScratchpadCore/       # Shared utilities
+│   └── TaskScratchpadCore/           # Shared utilities
+├── Tests/
+│   ├── TaskScratchpadTests/          # Unit tests
+│   └── TaskScratchpadUITests/        # XCUITest UI tests
 ├── scripts/
-│   └── create-dmg.sh             # Distribution script
+│   ├── create-dmg.sh                 # Distribution script
+│   └── run-ui-tests.sh               # Run UI tests locally
 └── docs/
-    ├── distribution.md           # How to distribute
-    ├── run-local.md              # Development setup
-    └── plan/                     # Task plans
+    ├── distribution.md               # How to distribute
+    ├── run-local.md                  # Development setup
+    └── plan/                         # Task plans
 ```
 
 ## 💡 Feature Requests
