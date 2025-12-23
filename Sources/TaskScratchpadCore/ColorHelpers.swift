@@ -3,9 +3,16 @@ import SwiftUI
 // MARK: - Color Palette
 
 public enum ColorPalette {
+    // Warm, friendly color palette
     public static let colors: [String] = [
-        "#6EA8FE", "#8F7CFF", "#F39C12", "#FF6F61",
-        "#1ABC9C", "#E67E22", "#5DADE2", "#AF7AC5"
+        "#E8A87C", // Warm peach
+        "#C38D9E", // Dusty rose
+        "#41B3A3", // Soft teal
+        "#E27D60", // Terracotta
+        "#85CDCA", // Mint
+        "#D4A574", // Caramel
+        "#A8D8EA", // Sky blue
+        "#F6D55C"  // Warm yellow
     ]
 
     public static func color(at index: Int) -> String {
