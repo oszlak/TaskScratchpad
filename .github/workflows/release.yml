@@ -2,17 +2,17 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches: [main]
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
-  build-and-release:
-    name: Build and Release
+  test:
+    name: Test
     runs-on: macos-14
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,12 +22,65 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Get Version from Tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
       - name: Run Tests
         run: swift test
+
+  release:
+    name: Semantic Release
+    needs: test
+    runs-on: macos-14
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install semantic-release
+        run: |
+          npm install -g semantic-release \
+            @semantic-release/changelog \
+            @semantic-release/exec \
+            @semantic-release/git
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Semantic Release
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
+
+  build:
+    name: Build & Upload Assets
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Pull latest changes
+        run: git pull origin main
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
 
       - name: Build Release
         run: swift build -c release
@@ -35,7 +88,7 @@ jobs:
       - name: Create App Bundle
         run: |
           APP_NAME="TaskScratchpad"
-          VERSION="${{ steps.version.outputs.VERSION }}"
+          VERSION="${{ needs.release.outputs.new_release_version }}"
           DIST_DIR="dist"
           APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
 
@@ -90,67 +143,36 @@ jobs:
           echo -n "APPL????" > "$APP_BUNDLE/Contents/PkgInfo"
 
       - name: Sign App (Ad-hoc)
-        run: |
-          codesign --force --deep --sign - dist/TaskScratchpad.app
+        run: codesign --force --deep --sign - dist/TaskScratchpad.app
 
       - name: Create DMG
         run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
+          VERSION="${{ needs.release.outputs.new_release_version }}"
           DMG_NAME="TaskScratchpad-$VERSION.dmg"
 
-          # Create temp directory with app and Applications link
           mkdir -p dist/dmg-temp
           cp -R dist/TaskScratchpad.app dist/dmg-temp/
           ln -s /Applications dist/dmg-temp/Applications
 
-          # Create DMG
           hdiutil create -volname "TaskScratchpad" \
               -srcfolder dist/dmg-temp \
               -ov -format UDZO \
               "dist/$DMG_NAME"
 
-          # Cleanup
           rm -rf dist/dmg-temp
 
       - name: Create ZIP
         run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
+          VERSION="${{ needs.release.outputs.new_release_version }}"
           cd dist
           zip -r "TaskScratchpad-$VERSION.zip" TaskScratchpad.app
 
-      - name: Generate Release Notes
-        id: notes
-        run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
-          echo "NOTES<<EOF" >> $GITHUB_OUTPUT
-          echo "## Task Scratchpad v$VERSION" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "### Installation" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "1. Download \`TaskScratchpad-$VERSION.dmg\`" >> $GITHUB_OUTPUT
-          echo "2. Open the DMG and drag Task Scratchpad to Applications" >> $GITHUB_OUTPUT
-          echo "3. Right-click the app → Open (first time only)" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "### Requirements" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "- macOS 14 (Sonoma) or later" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "### Note" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "This is an ad-hoc signed build. macOS may show a security warning on first launch." >> $GITHUB_OUTPUT
-          echo "To bypass: Right-click → Open → Open anyway" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: "v${{ steps.version.outputs.VERSION }}"
-          body: ${{ steps.notes.outputs.NOTES }}
-          draft: false
-          prerelease: ${{ contains(steps.version.outputs.VERSION, '-') }}
-          files: |
-            dist/TaskScratchpad-${{ steps.version.outputs.VERSION }}.dmg
-            dist/TaskScratchpad-${{ steps.version.outputs.VERSION }}.zip
+      - name: Upload Assets to Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+        run: |
+          VERSION="${{ needs.release.outputs.new_release_version }}"
+          gh release upload "v$VERSION" \
+            "dist/TaskScratchpad-$VERSION.dmg" \
+            "dist/TaskScratchpad-$VERSION.zip" \
+            --clobber
